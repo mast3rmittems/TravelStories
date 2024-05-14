@@ -1,0 +1,171 @@
+<% layout('layouts/boilerplate')%>
+
+<script> 
+    const mapToken = '<%-process.env.MAPBOX_TOKEN%>';
+        </script>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+
+<link rel="stylesheet" href="/stylesheets/new.css">
+
+<style>
+    #map {
+        height: 300px;
+    }
+</style>
+
+    <div class="row">
+        <h1 class="text-center">New Story</h1>
+        <div class="col-md-6 offset-md-3">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form action="/stories" method="POST" novalidate class="validated-form"
+                        enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label" for="title">Title</label>
+                            <input class="form-control" type="text" id="title" name="story[title]" required>
+                            <div class="valid-feedback">
+                                Looks good!
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="location">Location</label>
+                            <div class="input-group">
+                            <input class="form-control" type="text" id="location" name="story[location]" required>
+                            <button class="btn btn-outline-secondary" type="button" id="clearLocation">Clear</button>
+                        </div>
+                            <div class="valid-feedback">
+                                Looks good!
+                            </div>
+                        </div>
+
+                        <div id="map"></div>
+
+                        <input type="hidden" id="latitude" name="story[latitude]">
+                        <input type="hidden" id="longitude" name="story[longitude]">
+
+                        <!-- 
+                <input type="file" name="image" id="" multiple> -->
+                        <!-- <div class="mb-3">
+                    <label class="form-label" for="image">Image URL</label>
+                    <input class="form-control" type="text" id="image" name="campground[image]" required>
+                    <div class="valid-feedback">
+                        Looks good!
+                    </div>
+                </div> -->
+
+                        <div class="mb-3">
+                            <label class="form-label" for="description">Description</label>
+                            <textarea class="form-control" type="text" id="description" name="story[description]"
+                                required></textarea>
+                            <div class="valid-feedback">
+                                Looks good!
+                            </div>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input type="file" class="form-control" name="image" multiple id="image">
+                            <label class="input-group-text" for="inputGroupFile02"></label>
+                        </div>
+                        <div class="mb-3">
+                            <button class="btn btn-success">Add Story</button>
+                        </div>
+                    </form>
+                    <a href="/stories">All Stories</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = mapToken;
+
+        // Initialize the map
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [-79, 43], // Initial center (can be changed)
+            zoom: 5, // Initial zoom level (can be changed)
+        });
+
+        // Add navigation control to the map
+        map.addControl(new mapboxgl.NavigationControl());
+
+        // Add marker to the map
+        var marker = new mapboxgl.Marker({
+            draggable: true // Allow marker to be dragged
+        })
+        .setLngLat([-79, 43]) // Initial position (can be changed)
+        .addTo(map);
+
+        // Update marker position and input fields on dragend event
+        marker.on('dragend', function() {
+            var lngLat = marker.getLngLat();
+            document.getElementById('latitude').value = lngLat.lat;
+            document.getElementById('longitude').value = lngLat.lng;
+        });
+
+        // Listen for map click event to move the marker
+        map.on('click', function(e) {
+            marker.setLngLat(e.lngLat);
+            document.getElementById('latitude').value = e.lngLat.lat;
+            document.getElementById('longitude').value = e.lngLat.lng;
+
+            // Reverse geocode to get the address
+        reverseGeocode(e.lngLat.lng, e.lngLat.lat);
+        });
+
+        // Reverse geocoding function
+    function reverseGeocode(lng, lat) {
+        fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + lng + ',' + lat + '.json?access_token=' + mapboxgl.accessToken)
+        .then(response => response.json())
+        .then(data => {
+            var locationInput = document.getElementById('location');
+            if (data.features.length > 0) {
+                var address = data.features[0].place_name;
+                locationInput.value = address;
+            } else {
+                locationInput.value = '';
+            }
+        });
+    }
+
+    // Clear location input and marker
+document.getElementById('clearLocation').addEventListener('click', function() {
+    document.getElementById('location').value = '';
+    document.getElementById('latitude').value = '';
+    document.getElementById('longitude').value = '';
+    marker.setLngLat([0, 0]); // Reset marker position
+});
+
+        // Add event listener to the location input field
+document.getElementById('location').addEventListener('input', function() {
+    var location = this.value;
+
+    // Perform geocoding to convert location to coordinates
+    fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(location) + '.json?access_token=' + mapboxgl.accessToken)
+    .then(response => response.json())
+    .then(data => {
+        if (data.features.length > 0) {
+            // Get the coordinates of the first feature
+            var coordinates = data.features[0].geometry.coordinates;
+            var lng = coordinates[0];
+            var lat = coordinates[1];
+
+            // Update the marker position on the map
+            marker.setLngLat([lng, lat]);
+
+            // Update the hidden input fields for latitude and longitude
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+
+            // Center the map on the marker's new position
+            map.setCenter([lng, lat]);
+        }
+    });
+});
+    </script>
+
+
+ 
+

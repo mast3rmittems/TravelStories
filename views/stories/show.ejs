@@ -1,0 +1,128 @@
+<% layout('layouts/boilerplate')%>
+
+<script> 
+  const story = <%- JSON.stringify(story) %>
+  const mapToken = '<%-process.env.MAPBOX_TOKEN%>';
+      </script>
+
+  <link rel="stylesheet" href="/stylesheets/show.css">
+  <div class="row">
+    <div id="map"></div>
+    <div class="col-6">  
+      <div id="storyCarousel" class="carousel slide" data-bs-slide="carousel">
+        <div class="carousel-inner">
+          <% story.images.forEach((img, i)=> { %>
+            <div class="carousel-item <%= i == 0 ? 'active' : '' %>">
+              <div class="carousel-img">
+              <img crossorigin="anonymous" src="<%= img.url %>" class="d-block w-100" alt="" id="carouselImage">
+            </div>
+            </div>
+            <% }) %>
+        </div>
+        <% if (story.images.length > 1) { %>
+          <button class="carousel-control-prev" type="button" data-bs-target="#storyCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#storyCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+          <% } %>
+      </div>
+
+      <div class="card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">
+            <%= story.title %>
+          </h5>
+          <p class="card-text">
+            <%= story.description %>
+          </p>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item text-muted">
+            <%= story.location %>
+          </li>
+          <li class="list-group-item">Submitted by <%= story.author.username %>
+          </li>
+        </ul>
+        <% if (currentUser && story.author.equals(currentUser._id)) { %>
+          <div class="card-body">
+            <a class="card-link btn btn-info" href="/stories/<%=story._id%>/edit">Edit</a>
+            <form class="d-inline" action="/stories/<%=story._id%>?_method=DELETE" method="POST">
+              <button class="btn btn-danger">DELETE</button>
+            </form>
+          </div>
+          <% } %>
+          <div class="card-footer text-muted">
+            2 days ago
+          </div>
+      </div>
+
+    </div>
+    <div class="col-6">
+
+      <% if (currentUser) { %>
+        <h2>Leave a review</h2>
+        <form class="mb-3 validated-form" action="/stories/<%=story._id%>/reviews" method="POST" novalidate>
+        
+          <div class="mb-3">
+            <label class="form-label" for="body">Review Text</label>
+            <textarea class="form-control" name="review[body]" id="body" cols="30" rows="3" required></textarea>
+            <div class="valid-feedback">Looks good!</div>
+          </div>
+          <button class="btn btn-success">Submit</button>
+        </form>
+        <% } %>
+
+          <% for (let review of story.reviews) { %>
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <%= review.author.username %>
+                </h5>
+                <!-- <h6 class="card-subtitle mb-2 text-muted">By <%= review.author.username %>
+                </h6> -->
+                <p class="card-text">Review: <%= review.body %>
+                </p>
+                <% if (currentUser && review.author.equals(currentUser._id)) { %>
+                  <form action="/stories/<%=story._id%>/reviews/<%=review._id%>?_method=DELETE" method="POST">
+                    <button class="btn btn-sm btn-danger">Delete</button>
+                  </form>
+                  <% } %>
+              </div>
+            </div>
+            <% } %>
+    </div>
+  </div>
+
+  <script>
+    mapboxgl.accessToken = mapToken;
+
+    const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: story.geometry.coordinates,
+    zoom: 10,
+});
+
+map.addControl(new mapboxgl.NavigationControl());
+
+new mapboxgl.Marker()
+.setLngLat(story.geometry.coordinates)
+.setPopup(
+    new mapboxgl.Popup({offset: 25})
+    .setHTML(
+        `<h3>${story.title}</h3><p>${story.location}</p>`
+    )
+)
+.addTo(map)
+  </script>
+
+  <footer>
+    <a href="/stories">Back to All Stories</a>
+  </footer>
+
+ 
+

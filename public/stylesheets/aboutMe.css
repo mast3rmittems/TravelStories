@@ -1,0 +1,14 @@
+h1 {
+    text-align: center;
+}
+
+body {
+    height: 100vh;
+    background-image:
+    url("https://images.unsplash.com/photo-1705900266125-3b999d5a5c62?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHw1MHx8fGVufDB8fHx8fA%3D%3D");
+    background-size: cover;
+    background-position: center;
+    font-weight: 500;
+    color: rgb(227, 228, 228);
+    text-shadow: 0 0.05rem 0.1rem rgba(0,0,0,0.5);  
+}
